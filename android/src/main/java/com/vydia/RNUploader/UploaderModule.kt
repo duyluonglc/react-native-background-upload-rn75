@@ -55,6 +55,12 @@ class UploaderModule(context: ReactApplicationContext) :
    */
   private fun startUpload(options: ReadableMap): String {
     val upload = Upload.fromReadableMap(options)
+    
+    // Validate multipart upload requirements
+    if (upload.type == "multipart" && upload.field.isNullOrEmpty()) {
+      throw Upload.MissingOptionException("field (required for multipart uploads)")
+    }
+    
     val data = Gson().toJson(upload)
 
     val request = OneTimeWorkRequestBuilder<UploadWorker>()

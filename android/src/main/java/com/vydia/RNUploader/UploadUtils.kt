@@ -4,12 +4,15 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.*
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.MediaType.Companion.toMediaType
 import okio.Buffer
 import okio.BufferedSink
 import okio.ForwardingSink
 import okio.buffer
 import java.io.File
 import java.io.IOException
+import java.util.UUID
 import kotlin.coroutines.resumeWithException
 
 // Throttling interval of progress reports
@@ -24,7 +27,12 @@ suspend fun okhttpUpload(
   onProgress: (Long) -> Unit
 ) =
   suspendCancellableCoroutine<Response> { continuation ->
-    val requestBody = file.asRequestBody()
+    val requestBody = if (upload.type == "multipart") {
+      createMultipartBody(upload, file)
+    } else {
+      file.asRequestBody()
+    }
+    
     var lastProgressReport = 0L
     fun throttled(): Boolean {
       val now = System.currentTimeMillis()
@@ -51,6 +59,45 @@ suspend fun okhttpUpload(
         continuation.resumeWith(Result.success(response))
     })
   }
+
+// create multipart request body
+private fun createMultipartBody(upload: Upload, file: File): RequestBody {
+  val boundary = UUID.randomUUID().toString()
+  val builder = MultipartBody.Builder(boundary)
+    .setType(MultipartBody.FORM)
+  
+  // Add parameters
+  upload.parameters.forEach { (key, value) ->
+    builder.addFormDataPart(key, value)
+  }
+  
+  // Add file
+  val fieldName = upload.field ?: "file"
+  val mediaType = guessMimeType(file.name)
+  builder.addFormDataPart(
+    fieldName,
+    file.name,
+    file.asRequestBody(mediaType.toMediaType())
+  )
+  
+  return builder.build()
+}
+
+// guess MIME type from file extension
+private fun guessMimeType(fileName: String): String {
+  return when (fileName.substringAfterLast('.', "").lowercase()) {
+    "jpg", "jpeg" -> "image/jpeg"
+    "png" -> "image/png"
+    "gif" -> "image/gif"
+    "pdf" -> "application/pdf"
+    "txt" -> "text/plain"
+    "json" -> "application/json"
+    "xml" -> "application/xml"
+    "mp4" -> "video/mp4"
+    "mp3" -> "audio/mpeg"
+    else -> "application/octet-stream"
+  }
+}
 
 // create a request body that allows us to listen to progress.
 // okhttp has no built-in way of reporting progress

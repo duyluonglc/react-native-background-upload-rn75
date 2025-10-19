@@ -31,7 +31,7 @@ export type UploadOptions = {
   wifiOnly?: boolean;
   android: AndroidOnlyUploadOptions;
   ios?: IOSOnlyUploadOptions;
-} & RawUploadOptions;
+} & (RawUploadOptions | MultipartUploadOptions);
 
 type AndroidOnlyUploadOptions = {
   notificationId: string;
@@ -57,14 +57,13 @@ type RawUploadOptions = {
   type: 'raw';
 };
 
-// TODO support this to replace netq
-// type MultipartUploadOptions = {
-//   type: 'multipart';
-//   field: string;
-//   parameters?: {
-//     [index: string]: string;
-//   };
-// };
+type MultipartUploadOptions = {
+  type: 'multipart';
+  field: string;
+  parameters?: {
+    [index: string]: string;
+  };
+};
 
 export interface AddListener {
   (

@@ -70,21 +70,37 @@ Upload.startUpload(options)
 
 ## Multipart Uploads
 
-**🚧 COMING SOON**
+Set the `type` option to `multipart` and set the `field` option. Example:
 
-Just set the `type` option to `multipart` and set the `field` option. Example:
-
-```
+```js
 const options = {
   url: 'https://myservice.com/path/to/post',
   path: 'file://path/to/file%20on%20device.png',
   method: 'POST',
   field: 'uploaded_media',
-  type: 'multipart'
+  type: 'multipart',
+  parameters: {
+    'user_id': '12345',
+    'description': 'My uploaded file'
+  },
+  headers: {
+    'Authorization': 'Bearer your-token'
+  },
+  android: {
+    notificationChannel: 'upload-channel',
+    notificationId: 'upload-progress',
+    notificationTitle: 'Uploading file...',
+    notificationTitleNoWifi: 'Waiting for Wifi...',
+    notificationTitleNoInternet: 'Waiting for Internet...'
+  }
 }
+
+Upload.startUpload(options)
+  .then((uploadId) => console.log('Multipart upload started', uploadId))
+  .catch((err) => console.log('Upload error!', err));
 ```
 
-Note the `field` property is required for multipart uploads.
+Note: The `field` property is required for multipart uploads. The `parameters` property is optional and allows you to include additional form fields in the multipart request.
 
 # API
 
@@ -110,8 +126,8 @@ _Note: You must provide valid URIs. react-native-background-upload does not esca
 | `method`         | string                          | Optional                        | `POST`                                                                                                                                                                                                       | HTTP method                                                                                                                                                                                                                     |                                                                       |
 | `customUploadId` | string                          | Optional                        |                                                                                                                                                                                                              | `startUpload` returns a Promise that includes the upload ID, which can be used for future status checks. By default, the upload ID is automatically generated. This parameter allows a custom ID to use instead of the default. |                                                                       |
 | `headers`        | object                          | Optional                        |                                                                                                                                                                                                              | HTTP headers                                                                                                                                                                                                                    | `{ 'Accept': 'application/json' }`                                    |
-| `field`          | string                          | Required if `type: 'multipart'` |                                                                                                                                                                                                              | The form field name for the file. Only used when `type: 'multipart`                                                                                                                                                             | `uploaded-file`                                                       |
-| `parameters`     | object                          | Optional                        |                                                                                                                                                                                                              | Additional form fields to include in the HTTP request. Only used when `type: 'multipart`                                                                                                                                        |                                                                       |
+| `field`          | string                          | Required if `type: 'multipart'` |                                                                                                                                                                                                              | The form field name for the file. Only used when `type: 'multipart'`                                                                                                                                                             | `uploaded-file`                                                       |
+| `parameters`     | object                          | Optional                        |                                                                                                                                                                                                              | Additional form fields to include in the HTTP request. Only used when `type: 'multipart'`                                                                                                                                        | `{ 'user_id': '123', 'category': 'photos' }`                         |
 | `notification`   | Notification object (see below) | Optional                        |                                                                                                                                                                                                              | Android only.                                                                                                                                                                                                                   | `{ enabled: true, onProgressTitle: "Uploading...", autoClear: true }` |
 | `useUtf8Charset` | boolean                         | Optional                        |                                                                                                                                                                                                              | Android only. Set to true to use `utf-8` as charset.                                                                                                                                                                            |                                                                       |
 | `appGroup`       | string                          | Optional                        | iOS only. App group ID needed for share extensions to be able to properly call the library. See: https://developer.apple.com/documentation/foundation/nsfilemanager/1412643-containerurlforsecurityapplicati |

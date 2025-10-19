@@ -11,6 +11,9 @@ data class Upload(
   val url: String,
   val path: String,
   val method: String,
+  val type: String,
+  val field: String?,
+  val parameters: Map<String, String>,
   val maxRetries: Int,
   val wifiOnly: Boolean,
   val headers: Map<String, String>,
@@ -29,6 +32,16 @@ data class Upload(
       url = map.getString(Upload::url.name) ?: throw MissingOptionException(Upload::url.name),
       path = map.getString(Upload::path.name) ?: throw MissingOptionException(Upload::path.name),
       method = map.getString(Upload::method.name) ?: "POST",
+      type = map.getString(Upload::type.name) ?: "raw",
+      field = map.getString(Upload::field.name),
+      parameters = map.getMap(Upload::parameters.name).let { params ->
+        if (params == null) return@let mapOf()
+        val map = mutableMapOf<String, String>()
+        for (entry in params.entryIterator) {
+          map[entry.key] = entry.value.toString()
+        }
+        return@let map
+      },
       maxRetries = if (map.hasKey(Upload::maxRetries.name)) map.getInt(Upload::maxRetries.name) else 5,
       wifiOnly = if (map.hasKey(Upload::wifiOnly.name)) map.getBoolean(Upload::wifiOnly.name) else false,
       headers = map.getMap(Upload::headers.name).let { headers ->
